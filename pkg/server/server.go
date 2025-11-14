@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/taheri24/helitask/pkg/config"
 	"github.com/taheri24/helitask/pkg/logger"
+	"github.com/taheri24/helitask/pkg/utils"
 	"go.uber.org/fx"
 )
 
@@ -14,8 +15,11 @@ func StartServer(lc fx.Lifecycle, defaultApp *gin.Engine, cfg *config.Config, lo
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-
-			if err := defaultApp.Run(cfg.Server.Port); err != nil {
+			listenPort := cfg.Server.Port
+			if utils.IsNumber(listenPort) {
+				listenPort = ":" + listenPort
+			}
+			if err := defaultApp.Run(listenPort); err != nil {
 				slog.Error("Failed to start server", slog.Any("bindngErr", err))
 				return err
 			}

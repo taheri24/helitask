@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/taheri24/helitask/pkg/adapter/handlers"
 	"github.com/taheri24/helitask/pkg/config"
 	"github.com/taheri24/helitask/pkg/di"
 	"github.com/taheri24/helitask/pkg/logger"
@@ -25,20 +27,18 @@ func main() {
 	// Load config for the specific environment
 	cfg, err := config.LoadConfig(env)
 	if err != nil {
-		slog.Error("Error loading configuration", slog.Any("err", err))
-		os.Exit(1)
+		slog.Warn(fmt.Sprintf("Error loading configuration files(.env.%s .env)", env), slog.Any("err", err))
 	}
 
-	defaultLogger := logger.New("app.log")
 	appRoot := gin.Default()
-	db, err := di.ProvideDB(cfg)
-	if err != nil {
-		slog.Error("di.ProvideDB failed", slog.Any("err", err))
-		return
-	}
+
 	app := fx.New(
-		fx.Supply(cfg, db, appRoot, defaultLogger),
+		fx.NopLogger,
+		fx.Provide(logger.Default, di.ProvideDB),
+		fx.Supply(cfg, appRoot),
 		storage.Module,
+		handlers.Module,
+		fx.Invoke(storage.EnsureDatabaseServerVersion),
 		fx.Invoke(server.StartServer),
 	)
 

@@ -20,18 +20,20 @@ services:
       retries: 5
 
   app:
-    build: .
+    image: golang:latest
+    working_dir: /app
     environment:
-      DB_DSN: ${DB_DSN}
+      GIN_MODE: release
+      DB_DSN: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable
       PORT: ${PORT}
     ports:
-      - "8080:8080"
+      - "8080:${PORT}"
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/app
-    command: ["./app"]
+    command: ["go","run","."]
     networks:
       - app_network
 

@@ -49,6 +49,9 @@ func New(logSource string) Logger {
 
 	return &slogLogger{logger: logger}
 }
+func Default() Logger {
+	return NewSlogger(slog.Default())
+}
 
 func NewSlogger(slogger *slog.Logger) Logger {
 	return &slogLogger{slogger}
