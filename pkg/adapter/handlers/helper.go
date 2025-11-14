@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/taheri24/helitask/pkg/logger"
 )
@@ -10,7 +12,7 @@ type Helper struct {
 	defaultLogger logger.Logger
 }
 
-var helper *Helper
+var helper *Helper = NewBaseHandler(nil)
 
 // NewBaseHandler creates a new instance of BaseHandler
 func NewBaseHandler(defaultLogger logger.Logger) *Helper {
@@ -33,11 +35,16 @@ func (h *Helper) ResponseError(c *gin.Context, status int, message string, err e
 
 // SendSuccessResponse sends a standardized success response
 func (h *Helper) SendSuccessResponse(c *gin.Context, status int, data any) {
-	// Store logger in a variable for reuse
-	logger := h.GetLogger(c)
+	c.JSON(status, data)
+}
 
-	logger.Verbose("Sending success response")
-	c.JSON(status, gin.H{"data": data})
+// SendCreatedResponse sends a standardized success response
+func (h *Helper) SendCreatedResponse(c *gin.Context, id string) {
+	var output = struct {
+		ID string `json:"id"`
+	}{id}
+
+	c.JSON(http.StatusCreated, output)
 }
 
 // GetLogger returns a logger for the incoming request

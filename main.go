@@ -6,11 +6,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/taheri24/helitask/pkg/adapter/handlers"
 	"github.com/taheri24/helitask/pkg/config"
 	"github.com/taheri24/helitask/pkg/di"
 	"github.com/taheri24/helitask/pkg/logger"
-	"github.com/taheri24/helitask/pkg/ports/storage/postgres"
+	"github.com/taheri24/helitask/pkg/ports/storage"
 	"github.com/taheri24/helitask/pkg/server"
 	"go.uber.org/fx"
 )
@@ -39,8 +38,7 @@ func main() {
 	}
 	app := fx.New(
 		fx.Supply(cfg, db, appRoot, defaultLogger),
-		postgres.Module,
-		handlers.Module,
+		storage.Module,
 		fx.Invoke(server.StartServer),
 	)
 

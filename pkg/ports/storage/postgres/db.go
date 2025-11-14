@@ -24,7 +24,9 @@ func NewMockDB() (*gorm.DB, sqlmock.Sqlmock) {
 	if err != nil {
 		panic(fmt.Errorf("failed to create sqlmock: %w", err))
 	}
-	db, err := gorm.Open(pg.New(pg.Config{Conn: sqlDB}))
+	db, err := gorm.Open(pg.New(pg.Config{Conn: sqlDB}), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 	if err != nil {
 		panic(fmt.Errorf("failed to connect to database: %w", err))
 	}

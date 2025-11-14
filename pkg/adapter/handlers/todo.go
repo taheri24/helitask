@@ -1,30 +1,23 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/taheri24/helitask/pkg/domain"
-	"github.com/taheri24/helitask/pkg/logger"
 )
 
 // TodoHandler struct for HTTP requests
 type TodoHandler struct {
-	*Helper
 	repository domain.TodoRepository
-}
-
-// NewTodoHandler creates a new Handler instance
-func NewTodoHandler(repository domain.TodoRepository, logger logger.Logger) *TodoHandler {
-	return &TodoHandler{NewBaseHandler(logger), repository}
 }
 
 // CreateTodoItem handles creating a new TodoItem
 func (h *TodoHandler) CreateTodoItem(c *gin.Context) {
-	// Store logger in a variable for reuse
-	logger := h.GetLogger(c)
+	logger := helper.GetLogger(c)
 
 	ctx := c.Request.Context()
 	var input struct {
@@ -35,7 +28,7 @@ func (h *TodoHandler) CreateTodoItem(c *gin.Context) {
 	logger.Verbose("Received request to create TodoItem")
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		h.ResponseError(c, http.StatusBadRequest, "Invalid input", err)
+		helper.ResponseError(c, http.StatusBadRequest, "Invalid input", err)
 		return
 	}
 
@@ -48,10 +41,36 @@ func (h *TodoHandler) CreateTodoItem(c *gin.Context) {
 	logger.Verbose("Creating TodoItem with ID:", todo.ID)
 
 	if err := h.repository.Create(ctx, &todo); err != nil {
-		wrappedErr := errors.Wrap(err, "failed to save todo item")
-		h.ResponseError(c, http.StatusInternalServerError, "Failed to save todo item", wrappedErr)
+		wrappedErr := fmt.Errorf("failed to save todo item ,%w", err)
+		helper.ResponseError(c, http.StatusInternalServerError, "Failed to save todo item", wrappedErr)
 		return
 	}
+	helper.SendCreatedResponse(c, todo.ID.String())
+}
 
-	h.SendSuccessResponse(c, http.StatusCreated, todo)
+// CreateTodoItem handles creating a new TodoItem
+func (h *TodoHandler) GetTodoItem(c *gin.Context) {
+	ctx := c.Request.Context()
+	key := c.Param("id")
+	uuid, err := domain.ParseUUID(key)
+	if err != nil {
+		helper.ResponseError(c, http.StatusBadRequest, "Invalid UUID "+key, err)
+		return
+	}
+	dao, err := h.repository.GetByID(ctx, domain.UUID(uuid))
+	if err != nil {
+		if errors.Is(err, domain.ErrRecordNotFound) {
+			helper.ResponseError(c, http.StatusNotFound, "record not found", err)
+			return
+		}
+		helper.ResponseError(c, http.StatusInternalServerError, "Failed to fetch todo item", err)
+		return
+	}
+	var output = struct {
+		ID          string `json:"id"`
+		Description string `json:"description"`
+		DueDate     string `json:"due_date"`
+	}{dao.ID.String(), dao.Description, dao.DueDate.String()}
+
+	helper.SendSuccessResponse(c, http.StatusOK, output)
 }

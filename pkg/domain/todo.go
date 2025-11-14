@@ -3,19 +3,12 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-type UUID uuid.UUID
 type TodoItem struct {
-	ID          uuid.UUID `json:"id"`
-	Description string    `json:"description"`
-	DueDate     time.Time `json:"due_date"`
-}
-
-func NewUUID() uuid.UUID {
-	return uuid.New()
+	ID          UUID      `gorm:"id,primarykey"`
+	Description string    `gorm:"description"`
+	DueDate     time.Time `gorm:"due_date"`
 }
 
 type TodoRepository interface {

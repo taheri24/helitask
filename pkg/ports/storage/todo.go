@@ -1,4 +1,4 @@
-package postgres
+package storage
 
 import (
 	"context"
@@ -21,15 +21,15 @@ type PostgresTodoRepository struct {
 }
 
 // NewTodoRepository creates a new instance of the PostgresTodoRepository
-func NewTodoRepository(db *gorm.DB) domain.TodoRepository {
-	return &PostgresTodoRepository{DB: db, logger: logger.New("todo-repo.log")}
+func NewTodoRepository(db *gorm.DB, logger logger.Logger) domain.TodoRepository {
+	return &PostgresTodoRepository{DB: db, logger: logger}
 }
 
 // Create implements the TodoRepository interface for PostgreSQL
 func (r *PostgresTodoRepository) Create(ctx context.Context, todo *domain.TodoItem) error {
 
 	if err := r.DB.Create(todo).Error; err != nil {
-		r.logger.Error("Failed to save todo item", err)
+		///r.logger.Error("Failed to save todo item", err)
 		return fmt.Errorf("failed to save todo item, %w", err)
 	}
 	return nil
@@ -38,14 +38,9 @@ func (r *PostgresTodoRepository) Create(ctx context.Context, todo *domain.TodoIt
 // GetByID retrieves a TodoItem by ID
 func (r *PostgresTodoRepository) GetByID(context context.Context, id domain.UUID) (*domain.TodoItem, error) {
 	var todo domain.TodoItem
-
-	if err := r.DB.First(&todo, "id = ?", id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrTodoNotFound
-		}
-		r.logger.Error("Failed to get todo item", err)
-
-		return nil, fmt.Errorf("failed to get todo item %w", err)
+	key := id.String()
+	if err := r.DB.First(&todo, "id=?", key).Error; err != nil {
+		return nil, err
 	}
 	return &todo, nil
 }

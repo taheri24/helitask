@@ -49,7 +49,12 @@ func New(logSource string) Logger {
 
 	return &slogLogger{logger: logger}
 }
-func NewNoop() Logger {
+
+func NewSlogger(slogger *slog.Logger) Logger {
+	return &slogLogger{slogger}
+}
+
+func Nop() Logger {
 	return &noopLogger{}
 }
 
