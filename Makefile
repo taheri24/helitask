@@ -11,4 +11,4 @@ test:
 	go test ./...
 
 migrate:
-	go run ./cmd/main.go -migrate=true -env=development
+	go run ./cmd/migrate -env=development
