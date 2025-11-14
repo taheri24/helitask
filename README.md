@@ -1,6 +1,6 @@
 # Helitask
 
-Helitask is a Go service built with Uber's [`fx`](https://github.com/uber-go/fx) for dependency injection. It exposes a HTTP API for working with todo items and relies on PostgreSQL for persistence.
+Build a Go (1.24+) Todo service using hexagonal architecture. Implement a PostgreSQL-backed domain for TodoItems (id, description, dueDate) and expose RESTful APIs for handling todo items
 
 ## Prerequisites
 
