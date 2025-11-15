@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,126 @@ func TestCreateTodoItem(t *testing.T) {
 
 	})
 
+}
+
+// TestCreateTodoItemValidation tests input validation for CreateTodoItem
+func TestCreateTodoItemValidation(t *testing.T) {
+	app, fxApp := setupApp(t, "")
+	fxApp.RequireStart()
+	defer fxApp.RequireStop()
+
+	type TestCase struct {
+		name           string
+		input          string
+		expectedStatus int
+		errorContains  string
+	}
+
+	testCases := []TestCase{
+		{
+			name:           "Empty description",
+			input:          `{"description": "", "due_date": "2025-12-31T23:59:59Z"}`,
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "description is required",
+		},
+		{
+			name:           "Description too long",
+			input:          fmt.Sprintf(`{"description": "%s", "due_date": "2025-12-31T23:59:59Z"}`, strings.Repeat("a", MaxDescriptionLength+1)),
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "description exceeds maximum length",
+		},
+		{
+			name:           "Missing due_date",
+			input:          `{"description": "Test Todo"}`,
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "due_date is required",
+		},
+		{
+			name:           "Zero due_date",
+			input:          `{"description": "Test Todo", "due_date": "0001-01-01T00:00:00Z"}`,
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "due_date is required",
+		},
+		{
+			name:           "Valid input",
+			input:          `{"description": "Test Todo", "due_date": "2025-12-31T23:59:59Z"}`,
+			expectedStatus: http.StatusCreated,
+			errorContains:  "",
+		},
+		{
+			name:           "Description at minimum length",
+			input:          `{"description": "A", "due_date": "2025-12-31T23:59:59Z"}`,
+			expectedStatus: http.StatusCreated,
+			errorContains:  "",
+		},
+		{
+			name:           "Description at maximum length",
+			input:          fmt.Sprintf(`{"description": "%s", "due_date": "2025-12-31T23:59:59Z"}`, strings.Repeat("a", MaxDescriptionLength)),
+			expectedStatus: http.StatusCreated,
+			errorContains:  "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, w := setupHTTP("POST", "/api/v0/todo/", tc.input)
+			app.ServeHTTP(w, req)
+
+			if !assert.Equal(t, tc.expectedStatus, w.Code) {
+				t.Log(w.Body.String())
+			}
+
+			if tc.errorContains != "" {
+				errorMsg := extractJsonVal(w.Body.Bytes(), "error")
+				assert.Contains(t, errorMsg, tc.errorContains)
+			}
+		})
+	}
+}
+
+// TestGetTodoItemInvalidUUID tests UUID validation for GetTodoItem
+func TestGetTodoItemInvalidUUID(t *testing.T) {
+	app, fxApp := setupApp(t, "")
+	fxApp.RequireStart()
+	defer fxApp.RequireStop()
+
+	type TestCase struct {
+		name           string
+		uuid           string
+		expectedStatus int
+		errorContains  string
+	}
+
+	testCases := []TestCase{
+		{
+			name:           "Invalid UUID format",
+			uuid:           "not-a-uuid",
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "Invalid UUID",
+		},
+		{
+			name:           "UUID with invalid characters",
+			uuid:           "12345-67890-abcdef-ghijk",
+			expectedStatus: http.StatusBadRequest,
+			errorContains:  "Invalid UUID",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, w := setupHTTP("GET", fmt.Sprintf("/api/v0/todo/%s", tc.uuid), "")
+			app.ServeHTTP(w, req)
+
+			if !assert.Equal(t, tc.expectedStatus, w.Code) {
+				t.Log(w.Body.String())
+			}
+
+			if tc.expectedStatus == http.StatusBadRequest {
+				errorMsg := extractJsonVal(w.Body.Bytes(), "error")
+				assert.Contains(t, errorMsg, tc.errorContains)
+			}
+		})
+	}
 }
 
 // TestGetTodoItem tests the CreateTodoItem handler
