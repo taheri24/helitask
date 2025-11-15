@@ -77,6 +77,30 @@ Or use the Make wrapper:
 make test
 ```
 
+## API integration tests (Hurl)
+
+The `api_tests/` directory contains end-to-end suites expressed in the [Hurl](https://hurl.dev) DSL. These scripts exercise the
+Helitask REST API using the same request / response layout described in the inline examples inside `api_tests/README.md`.
+
+1. Install the Hurl CLI locally. Refer to the [installation guide](https://hurl.dev/docs/installation.html) for platform-specific
+   instructions.
+2. Start a Helitask instance (defaults to `http://localhost:8080`):
+   ```bash
+   APP_ENV=development go run ./main.go
+   ```
+3. Execute the suites with Hurl:
+   ```bash
+   hurl --test api_tests/todo_success.hurl
+   hurl --test api_tests/todo_error_cases.hurl
+   ```
+
+The suites default to the local development base URL defined via their `[Options]` block. If your server runs elsewhere,
+override it when invoking Hurl:
+
+```bash
+hurl --variable base_url=https://example.org/api/v0 --test api_tests/todo_success.hurl
+```
+
 ## Additional useful commands
 
 - Build all packages:
