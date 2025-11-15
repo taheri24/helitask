@@ -1,0 +1,53 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+coverage/
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Build directories
+bin/
+dist/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+
+# IDE and editor directories
+.vscode/
+.idea/
+*.iml
+
+# Environment files
+.env
+
+# Docker
+*.pid
+*.seed
+
+# Postgres data directories
+pg_data/
+
+# Local tooling
+node_modules/
+.npm/
+
+# Docker Compose override
+docker-compose.override.yml
+
+# Coverage reports
+coverage.txt
+
