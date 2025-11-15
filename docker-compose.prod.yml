@@ -3,6 +3,7 @@ version: '3.9'
 services:
   db:
     image: postgres:18.1-alpine3.22
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -20,18 +21,18 @@ services:
       retries: 5
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
-      DB_DSN: ${DB_DSN}
+      APP_ENV: production
+      DB_DSN: "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable"
       PORT: ${PORT}
-    ports:
-      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - .:/app
-    command: ["./app"]
+    ports:
+      - "8080:8080"
     networks:
       - app_network
 
