@@ -1,4 +1,4 @@
-binary = hey
+binary = helitask
 
 release:
 	GOOS=windows GOARCH=amd64 go build -o ./bin/$(binary)_windows_amd64
@@ -19,3 +19,4 @@ test:
 
 migrate:
 	go run ./cmd/migrate -env=development
+
